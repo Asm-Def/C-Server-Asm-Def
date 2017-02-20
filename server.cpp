@@ -2,17 +2,20 @@
 #include "socket.h"
 #include "config.h"
 
+void work(int conn);
+
 int main()
 {
 	get_config();
 	printf("initializing finished\n");
 	int lis, conn;
 	sockaddr_in servaddr, cliaddr;
-	socklen_t cli_len;
-	char buff[MAXLINE + 100];
+	socklen_t serv_len, cli_len;
 
 	printf("建立监听套接字...");
+	int reuse = 1;
 	lis = Socket(AF_INET, SOCK_STREAM, 0);
+	setsockopt(lis, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));	//端口重用
 	printf("完成\n");
 
 	printf("准备服务器地址...\n");
@@ -26,20 +29,17 @@ int main()
 	Listen(lis, LISTENQ);
 	printf("完成,服务器端口是%d\n", ntohs(servaddr.sin_port));
 
-	size_t offs, n;
-
 	while(true)
 	{
+		memset(&cliaddr, 0, sizeof(cliaddr));
 		conn = Accept(lis, (SA *) &cliaddr, &cli_len);
 
-		offs = sprintf(buff, "%s:%d $:", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
+		if(getpeername(conn, (SA *) &cliaddr, &cli_len))
+			err_msg("getpeername error");
+
 		printf("accpet from %s:%d\n", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
 
-		if((n = read(conn, buff + offs, MAXLINE)) <= 0) err_msg("read error");
-
-		buff[offs+n] = 0;
-
-		if((n = write(conn, buff, strlen(buff))) <= 0) err_msg("write error");
+		work(conn);
 
 		close(conn);
 	}
