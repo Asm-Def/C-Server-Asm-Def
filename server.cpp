@@ -29,7 +29,9 @@ int main()
 	Listen(lis, LISTENQ);
 	printf("完成,服务器端口是%d\n", ntohs(servaddr.sin_port));
 
-	while(true)
+	int fpid = 1;
+
+	while(fpid > 0)
 	{
 		memset(&cliaddr, 0, sizeof(cliaddr));
 		conn = Accept(lis, (SA *) &cliaddr, &cli_len);
@@ -39,7 +41,9 @@ int main()
 
 		printf("accpet from %s:%d\n", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
 
-		work(conn);
+		if((fpid = fork()) < 0) err_sys("error in fork");
+		else if(fpid == 0)
+			work(conn);
 
 		close(conn);
 	}
