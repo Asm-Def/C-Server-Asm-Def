@@ -14,6 +14,9 @@
 #include <signal.h>
 #include <netinet/in.h>		//sockaddr_in{} and other Internet defns
 
+#include <thread>			//C++11 std::thread
+#include <mutex>			//C++11 std::mutex
+
 #define MAXLINE 4096
 #define LISTENQ 1024
 #define BUFFSIZE 8192

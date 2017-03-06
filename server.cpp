@@ -2,7 +2,9 @@
 #include "socket.h"
 #include "config.h"
 
-void work(int conn);
+std::mutex	sock_lck, log_lck;
+
+void work(int conn, std::mutex *, std::mutex *);
 
 int main()
 {
@@ -29,23 +31,24 @@ int main()
 	Listen(lis, LISTENQ);
 	printf("完成,服务器端口是%d\n", ntohs(servaddr.sin_port));
 
-	int fpid = 1;
-
-	while(fpid > 0)
+	while(true)
 	{
 		memset(&cliaddr, 0, sizeof(cliaddr));
 		conn = Accept(lis, (SA *) &cliaddr, &cli_len);
 
-		if(getpeername(conn, (SA *) &cliaddr, &cli_len))
+		if(getpeername(conn, (SA *) &cliaddr, &cli_len)){
+			log_lck.lock();
 			err_msg("getpeername error");
+			log_lck.unlock();
+		}
 
+		log_lck.lock();
 		printf("accpet from %s:%d\n", inet_ntoa(cliaddr.sin_addr), ntohs(cliaddr.sin_port));
+		log_lck.unlock();
 
-		if((fpid = fork()) < 0) err_sys("error in fork");
-		else if(fpid == 0)
-			work(conn);
+		std::thread worker(work, conn, &sock_lck, &log_lck);
 
-		close(conn);
+		worker.detach();
 	}
 
 	return 0;
