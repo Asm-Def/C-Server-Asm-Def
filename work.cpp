@@ -16,9 +16,9 @@ void work(int conn)
 	read(conn, buff + offs, MAXLINE - offs);
 	offs = printf("%s\n", buff);
 
-	sprintf(output, "%s\n%s\n\n%s", "HTTP/1.1 200 OK",
+	sprintf(output, "%s\r\n%s\r\n\r\n%s", "HTTP/1.1 200 OK",
 			"Host:Asm.Def",
-			"<html>\n<body>Hello World!</body>\n</html>");
+			"<!DOCTYPE html>\r\n<html>\r\n<body>Hello World!</body>\r\n</html>");
 
 	write(conn, output, strlen(output));
 
